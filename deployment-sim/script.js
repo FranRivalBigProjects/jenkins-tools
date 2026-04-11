@@ -1,0 +1,1 @@
+const res=document.getElementById('res');function run(){let s=+steps.value;if(!s){res.innerText='Enter value';return;}res.innerText=`Deployment steps: ${s}`;}

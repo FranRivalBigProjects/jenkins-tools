@@ -1,0 +1,1 @@
+const res=document.getElementById('res');function run(){let n=nodes.value.split('\n').length;res.innerText=`Nodes: ${n}`;}

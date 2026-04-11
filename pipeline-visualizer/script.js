@@ -1,0 +1,1 @@
+const res=document.getElementById('res');function run(){let s=pipeline.value.split('\n').filter(x=>x.trim()).length;res.innerText=`Stages: ${s}`;}

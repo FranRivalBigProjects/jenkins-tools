@@ -1,0 +1,1 @@
+const res=document.getElementById('res');function run(){res.innerText=file.value.includes('stages')?'Valid Jenkinsfile':'Invalid Jenkinsfile';}

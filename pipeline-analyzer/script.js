@@ -1,0 +1,1 @@
+const res=document.getElementById('res');function run(){let e=(pipeline.value.match(/stage/gi)||[]).length;res.innerText=`Stages detected: ${e}`;}
