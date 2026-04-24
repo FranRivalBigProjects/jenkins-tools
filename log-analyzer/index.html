@@ -1,1 +1,1176 @@
-<html><head><title>Jenkins Log Analyzer</title><link rel='stylesheet' href='styles.css'></head><body><div class='container'><h1>Jenkins Log Analyzer</h1><textarea id='log'></textarea><button onclick='run()'>Run</button><div id='res' class='result'></div></div><script src='script.js'></script></body></html>
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google-site-verification" content="PkLa_ViOo6FAHpvh8SacceMb95o9tePRdrqLNBz9X1M" />
+<meta name="robots" content="index, follow">
+
+<title>Jenkins Log Analyzer – Free Build Log Parser & Error Detection Tool</title>
+
+<meta name="description" content="Free Jenkins log analyzer. Paste your Jenkins build log to detect errors, exceptions, failed stages, timeouts, plugin issues, and warnings instantly. No login, no server required.">
+
+<meta name="keywords" content="jenkins log analyzer, jenkins build log analyzer, jenkins log parser, jenkins log analysis tool, jenkins build error analyzer, jenkins console log analyzer, analyze jenkins logs, jenkins failure log analyzer, jenkins pipeline log analysis, jenkins log error detection">
+
+<link rel="canonical" href="https://franrivalbigprojects.github.io/jenkins-tools/log-analyzer/">
+
+<meta property="og:title" content="Jenkins Log Analyzer – Free Build Log Parser & Error Detection">
+<meta property="og:description" content="Paste your Jenkins build log to detect errors, exceptions, failed stages, timeouts, and plugin issues. Free, no login, runs in browser.">
+<meta property="og:type" content="website">
+
+<meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #07090e;
+  --surface: #0b0e16;
+  --surface2: #0f1320;
+  --border: #141c2c;
+  --border-light: #1c2840;
+  --yellow: #facc15;
+  --yellow-dim: rgba(250,204,21,0.1);
+  --yellow-dim2: rgba(250,204,21,0.05);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.08);
+  --orange: #f97316;
+  --orange-dim: rgba(249,115,22,0.08);
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,0.1);
+  --green-dim2: rgba(34,197,94,0.05);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.08);
+  --text: #cbd5e1;
+  --text-muted: #475569;
+  --text-dim: #1e3048;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* HEADER */
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7,9,14,0.96);
+  backdrop-filter: blur(10px);
+}
+
+.header-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-mark {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--yellow);
+  background: var(--yellow-dim2);
+  border: 1px solid rgba(250,204,21,0.2);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.logo-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.logo-text strong { color: var(--yellow); font-weight: 500; }
+
+/* WRAPPER */
+.wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* HERO */
+.hero {
+  padding: 44px 0 32px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: var(--yellow);
+  opacity: 0.5;
+}
+
+h1 {
+  font-size: clamp(21px, 3.2vw, 29px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+h1 em { font-style: normal; color: var(--yellow); }
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 600px;
+  line-height: 1.75;
+  margin-bottom: 20px;
+}
+
+.hero-sub strong { color: var(--text); }
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+}
+
+.badge.yellow {
+  color: var(--yellow);
+  background: var(--yellow-dim2);
+  border-color: rgba(250,204,21,0.25);
+}
+
+/* TOOL */
+.tool-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.tool-head {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 11px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tool-actions-top {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-sm {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  border: 1px solid;
+}
+
+.btn-sm:hover { opacity: 0.75; }
+.btn-sm-sample { background: var(--green-dim); color: var(--green); border-color: rgba(34,197,94,0.25); }
+.btn-sm-clear { background: transparent; color: var(--text-muted); border-color: var(--border-light); }
+
+.tool-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 480px;
+}
+
+.tool-input-side {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#logInput {
+  flex: 1;
+  width: 100%;
+  min-height: 380px;
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  resize: none;
+  tab-size: 2;
+}
+
+#logInput:focus { outline: none; }
+#logInput::placeholder { color: var(--text-dim); }
+
+.analyze-btn-wrap {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+.btn-analyze {
+  width: 100%;
+  padding: 11px;
+  font-size: 14px;
+  font-family: var(--sans);
+  font-weight: 600;
+  background: var(--yellow);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn-analyze:hover { opacity: 0.85; }
+.btn-analyze:active { transform: scale(0.98); }
+
+/* RESULTS */
+.tool-results-side {
+  display: flex;
+  flex-direction: column;
+}
+
+.results-area {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  min-height: 400px;
+}
+
+.results-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 380px;
+  gap: 8px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+.results-empty-icon { font-size: 28px; opacity: 0.3; }
+
+/* stats */
+.scan-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.scan-stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 9px;
+  text-align: center;
+}
+
+.scan-stat .snum {
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1;
+  display: block;
+}
+
+.scan-stat .slbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 3px;
+}
+
+/* findings */
+.finding {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin-bottom: 7px;
+  border-left: 3px solid;
+}
+
+.finding-error { border-left-color: var(--red); }
+.finding-warning { border-left-color: var(--orange); }
+.finding-info { border-left-color: var(--blue); }
+.finding-success { border-left-color: var(--green); }
+
+.finding-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+
+.finding-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+.fb-error { color: var(--red); background: var(--red-dim); border-color: rgba(239,68,68,0.2); }
+.fb-warning { color: var(--orange); background: var(--orange-dim); border-color: rgba(249,115,22,0.2); }
+.fb-info { color: var(--blue); background: var(--blue-dim); border-color: rgba(96,165,250,0.2); }
+.fb-success { color: var(--green); background: var(--green-dim); border-color: rgba(34,197,94,0.2); }
+
+.finding-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.finding-body {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 5px;
+}
+
+.finding-snippet {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 5px 8px;
+  color: var(--yellow);
+  word-break: break-all;
+  line-height: 1.5;
+  max-height: 60px;
+  overflow: hidden;
+}
+
+.finding-line {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.ok-box {
+  background: var(--green-dim);
+  border: 1px solid rgba(34,197,94,0.25);
+  border-radius: 5px;
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--green);
+  text-align: center;
+}
+
+/* summary section */
+.log-summary {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--yellow);
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.log-summary strong { color: var(--yellow); }
+
+/* DIVIDER */
+hr.divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+/* CONTENT */
+.content-section { margin-bottom: 48px; }
+
+.section-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  opacity: 0.7;
+  margin-bottom: 8px;
+  display: block;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 14px;
+  letter-spacing: -0.01em;
+}
+
+p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface2);
+  color: var(--yellow);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border-light);
+}
+
+/* dense block */
+.dense-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-top: 16px;
+}
+
+.dense-block p {
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.8;
+}
+
+.dense-block p:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.dense-block strong { color: var(--text); }
+
+/* FAQ */
+.faq-list {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-item:last-child { border-bottom: none; }
+
+.faq-q {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: none;
+  padding: 15px 20px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s;
+  font-weight: 500;
+}
+
+.faq-q:hover { background: var(--yellow-dim2); }
+
+.faq-arrow {
+  font-size: 11px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+.faq-a {
+  display: none;
+  padding: 0 20px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.faq-item.open .faq-a { display: block; }
+
+/* other tools */
+.other-tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.other-tool-link {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+  display: block;
+}
+
+.other-tool-link:hover {
+  border-color: rgba(250,204,21,0.3);
+  background: var(--yellow-dim2);
+}
+
+.otl-eye {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 4px;
+}
+
+.otl-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--yellow);
+  font-weight: 500;
+}
+
+/* footer */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 22px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.footer-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+footer p { font-size: 11px; color: var(--text-dim); font-family: var(--mono); margin: 0; }
+
+@media (max-width: 680px) {
+  .tool-body { grid-template-columns: 1fr; }
+  .tool-input-side { border-right: none; border-bottom: 1px solid var(--border); }
+  .scan-stats { grid-template-columns: 1fr 1fr; }
+  .hero { padding: 30px 0 22px; }
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Jenkins Log Analyzer",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Free Jenkins log analyzer. Paste your Jenkins build console log to detect build failures, Java exceptions, failed pipeline stages, timeouts, plugin errors, OOM errors, and warnings. No login, no server, runs in browser.",
+  "featureList": "Jenkins build failure detection, Java exception parsing, pipeline stage analysis, OOM error detection, timeout detection, plugin error detection, ANSI code stripping, build time extraction, test failure detection"
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I analyze Jenkins build logs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Paste your Jenkins console output log into this analyzer and click Analyze Log. The tool scans for build failures, Java exceptions, failed pipeline stages, OOM errors, timeouts, plugin issues, and test failures. It classifies findings by severity and shows the exact log line where each issue was detected. For large logs, copy the console output from Jenkins: Open build > Console Output > Select All > Paste here."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What causes Jenkins builds to fail?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Common Jenkins build failure causes: compilation errors (syntax errors, missing dependencies), test failures (JUnit/TestNG failures showing FAILED or ERROR), out-of-memory errors (java.lang.OutOfMemoryError), timeout errors (Timeout has been exceeded, FlowInterruptedException), plugin configuration errors, missing credentials, network failures fetching dependencies, Groovy script errors in Jenkinsfile, and agent/node disconnection during builds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is FlowInterruptedException in Jenkins?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "FlowInterruptedException occurs when a Jenkins pipeline is interrupted — either by a timeout step, a user abort, or an external signal. Common causes: the timeout() step in your Jenkinsfile exceeded its configured duration, a user clicked Abort Build, or a downstream job timed out. Fix: increase timeout values, optimize slow stages, or investigate why the stage takes longer than expected."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I find the root cause of a Jenkins failure in logs?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Search backwards from 'BUILD FAILURE' — the actual error is usually 10-50 lines above the failure message, not at the bottom. Look for: lines starting with 'ERROR', 'FATAL', or 'Exception', lines containing 'at ' (Java stack traces), lines with 'exit code' that is non-zero, and lines with 'Stage' followed by failure messages. This analyzer automatically surfaces these patterns and links each finding to its line number."
+      }
+    }
+  ]
+}
+</script>
+
+</head>
+
+<body>
+
+<header>
+  <div class="header-inner">
+    <span class="logo-mark">CI</span>
+    <span class="logo-text"><strong>jenkins</strong>-log-analyzer</span>
+  </div>
+</header>
+
+<div class="wrapper">
+
+  <!-- HERO -->
+
+  <section class="hero">
+    <p class="hero-eyebrow">Free Jenkins DevOps Tool</p>
+    <h1><em>Jenkins Log Analyzer</em> —<br>Build Log Parser & Error Detection</h1>
+    <p class="hero-sub">
+      Paste your <strong>Jenkins console output</strong> to detect build failures, Java exceptions, failed pipeline stages, timeouts, OOM errors, and plugin issues. <strong>No login, no server — runs in your browser.</strong>
+    </p>
+    <div class="badges">
+      <span class="badge yellow">Build failures</span>
+      <span class="badge yellow">Stack traces</span>
+      <span class="badge">Stage detection</span>
+      <span class="badge">OOM errors</span>
+      <span class="badge">Timeouts</span>
+      <span class="badge">Free · No login</span>
+    </div>
+  </section>
+
+  <!-- TOOL -->
+
+  <div class="tool-wrap">
+    <div class="tool-head">
+      <span class="tool-title">// Jenkins Log Analyzer</span>
+      <div class="tool-actions-top">
+        <button class="btn-sm btn-sm-sample" onclick="loadSample()">Load Sample</button>
+        <button class="btn-sm btn-sm-clear" onclick="clearTool()">Clear</button>
+      </div>
+    </div>
+    <div class="tool-body">
+      <!-- Input -->
+      <div class="tool-input-side">
+        <div class="panel-label">
+          <span>// Paste Jenkins console output</span>
+          <span id="lineCount" style="color:var(--text-dim)"></span>
+        </div>
+        <textarea id="logInput" placeholder="Paste your Jenkins build console log here..."></textarea>
+        <div class="analyze-btn-wrap">
+          <button class="btn-analyze" onclick="analyzeLog()">Analyze Log</button>
+        </div>
+      </div>
+      <!-- Results -->
+      <div class="tool-results-side">
+        <div class="panel-label">
+          <span>// Analysis results</span>
+          <span id="findingCount" style="color:var(--text-dim)"></span>
+        </div>
+        <div class="results-area" id="resultsArea">
+          <div class="results-empty">
+            <span class="results-empty-icon">⚙</span>
+            <span>Paste a Jenkins log and click<br>Analyze Log</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- WHAT IT DETECTS -->
+
+  <section class="content-section">
+    <span class="section-eyebrow">// Detection coverage</span>
+    <h3>What This Jenkins Log Analyzer Detects</h3>
+    <p>
+      Jenkins console logs are verbose and hard to read — especially after a failed build that generates hundreds of lines of stack traces, Maven output, and plugin messages. This analyzer scans the raw log and surfaces only what matters, classified by severity.
+    </p>
+    <p>
+      The tool strips ANSI color codes, identifies stage boundaries, extracts build timing, counts test results, and detects the specific patterns that cause most Jenkins failures in production pipelines.
+    </p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- WHAT DEVS ASK -->
+
+  <section class="content-section">
+    <span class="section-eyebrow">// Common Jenkins log issues</span>
+    <h3>What Developers Ask About Jenkins Log Analysis</h3>
+    <div class="dense-block">
+      <p><strong>How do I find what actually failed in a long Jenkins log?</strong><br>
+      Search backwards from <code>BUILD FAILURE</code> or <code>Finished: FAILURE</code> — the actual root cause is typically 10-100 lines above those markers, not at the end. Look for lines starting with <code>ERROR</code>, <code>FATAL</code>, or <code>Exception</code>. In Maven builds, look for <code>[ERROR]</code> prefixed lines. In Gradle, look for lines with <code>FAILED</code> or <code>Execution failed for task</code>. Jenkins also prepends stage names to log sections — find the stage that failed first to narrow your search.</p>
+
+
+  <p><strong>What does "Process leaked file descriptors" mean in Jenkins?</strong><br>
+  This warning means a subprocess spawned by your build opened file descriptors (files, sockets, pipes) and didn't close them before the process exited. Common causes: shell scripts that fork background processes, test servers started but not stopped, or resource-heavy Maven plugins. It's usually a warning rather than an error — the build may succeed — but it can cause resource exhaustion on busy agents over time. Fix by ensuring all spawned processes are explicitly terminated in post steps.</p>
+
+  <p><strong>Why does my Jenkins stage show "null" in the logs?</strong><br>
+  Null stage names appear when Groovy scripted pipeline code evaluates a variable that hasn't been initialized yet, or when a shared library function returns null for the stage name parameter. In declarative pipelines, this often happens with conditional stages where the <code>when</code> block isn't evaluating as expected. Check that all stage name strings are hardcoded or that variables are initialized before the stage definition.</p>
+
+  <p><strong>How do I fix "java.lang.OutOfMemoryError: GC overhead limit exceeded" in Jenkins?</strong><br>
+  This means the JVM spent more than 98% of time garbage collecting while recovering less than 2% of memory. Solutions: increase JVM heap with <code>JAVA_OPTS="-Xmx2g"</code> in your build step, add <code>-XX:+UseG1GC</code> for better GC performance with large heaps, identify memory leaks in your build scripts, reduce parallel test execution, or split the build into smaller stages that don't all run in-memory simultaneously.</p>
+</div>
+
+  </section>
+
+  <hr class="divider">
+
+  <!-- FAQ -->
+
+  <section class="content-section">
+    <span class="section-eyebrow">// FAQ</span>
+    <h3>Frequently Asked Questions</h3>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">How do I analyze Jenkins build logs?<span class="faq-arrow">▾</span></button>
+        <div class="faq-a">Open your failed build in Jenkins, click Console Output, select all text (Ctrl+A), copy, and paste into this analyzer. Click Analyze Log. The tool surfaces errors, exceptions, failed stages, and warnings with their line numbers so you can jump directly to the relevant section.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What does BUILD FAILURE mean in Jenkins?<span class="faq-arrow">▾</span></button>
+        <div class="faq-a">BUILD FAILURE is Maven's exit signal indicating at least one lifecycle phase failed — usually a compile error, test failure, or plugin execution failure. Jenkins marks the build as FAILURE in response. The actual cause is always earlier in the log — look for [ERROR] lines above the BUILD FAILURE line. Groovy/shell step failures show as "script returned exit code N" instead.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Is my Jenkins log data sent to a server?<span class="faq-arrow">▾</span></button>
+        <div class="faq-a">No. All analysis runs entirely in your browser. Nothing is sent anywhere. Safe to use with production build logs that may contain internal hostnames, artifact paths, or partial credentials in environment variable dumps.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What is the difference between this and the Jenkins log-parser plugin?<span class="faq-arrow">▾</span></button>
+        <div class="faq-a">The Jenkins log-parser plugin runs server-side inside your Jenkins instance and requires configuration of parsing rules files. This tool runs in the browser — paste any log from any Jenkins version, any build type, without modifying your Jenkins setup. It's designed for quick ad-hoc analysis of a specific failed build, not for automated classification of all builds.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section class="content-section">
+    <span class="section-eyebrow">// More Jenkins tools</span>
+    <h3>Other Tools</h3>
+    <div class="other-tools">
+      <a href="../jenkinsfile-validator/" class="other-tool-link">
+        <p class="otl-eye">validate //</p>
+        <span class="otl-name">Jenkinsfile Validator</span>
+      </a>
+      <a href="../pipeline-visualizer/" class="other-tool-link">
+        <p class="otl-eye">visual //</p>
+        <span class="otl-name">Pipeline Visualizer</span>
+      </a>
+      <a href="../failure-analyzer/" class="other-tool-link">
+        <p class="otl-eye">debug //</p>
+        <span class="otl-name">Failure Analyzer</span>
+      </a>
+      <a href="../build-time/" class="other-tool-link">
+        <p class="otl-eye">perf //</p>
+        <span class="otl-name">Build Time Analyzer</span>
+      </a>
+      <a href="../groovy-tester/" class="other-tool-link">
+        <p class="otl-eye">groovy //</p>
+        <span class="otl-name">Groovy Tester</span>
+      </a>
+      <a href="../pipeline-analyzer/" class="other-tool-link">
+        <p class="otl-eye">pipeline //</p>
+        <span class="otl-name">Pipeline Analyzer</span>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <p>jenkins-log-analyzer · free · browser-only · no login</p>
+    <p>build failures · exceptions · stages · timeouts · OOM</p>
+  </div>
+</footer>
+
+<script>
+// ─── LOG ANALYSIS RULES ───
+const RULES = [
+  // BUILD RESULT
+  { id: 'build-failure', type: 'error', badge: 'fb-error', title: 'BUILD FAILURE',
+    re: /BUILD FAILURE/,
+    body: 'Maven reported a build failure. The root cause is earlier in the log — look for [ERROR] lines above this line.',
+    fix: null },
+  { id: 'finished-failure', type: 'error', badge: 'fb-error', title: 'Build finished: FAILURE',
+    re: /Finished: FAILURE/,
+    body: 'Jenkins pipeline finished with FAILURE status. Check stage-level errors above.',
+    fix: null },
+  { id: 'finished-unstable', type: 'warning', badge: 'fb-warning', title: 'Build finished: UNSTABLE',
+    re: /Finished: UNSTABLE/,
+    body: 'Build is UNSTABLE — usually caused by test failures that did not abort the pipeline. Review test results.',
+    fix: null },
+  { id: 'finished-aborted', type: 'warning', badge: 'fb-warning', title: 'Build Aborted',
+    re: /Finished: ABORTED/,
+    body: 'Build was aborted — either manually, by a timeout step, or by FlowInterruptedException.',
+    fix: null },
+
+  // OOM
+  { id: 'oom', type: 'error', badge: 'fb-error', title: 'OutOfMemoryError',
+    re: /java\.lang\.OutOfMemoryError/,
+    body: 'JVM ran out of heap space. Increase heap with JAVA_OPTS="-Xmx2g" or reduce parallel execution.',
+    fix: 'Add JAVA_OPTS="-Xmx2g -XX:+UseG1GC" to your build step environment.' },
+  { id: 'gc-overhead', type: 'error', badge: 'fb-error', title: 'GC overhead limit exceeded',
+    re: /GC overhead limit exceeded/,
+    body: 'JVM spent >98% of time garbage collecting. Usually caused by memory leak or insufficient heap.',
+    fix: 'Increase -Xmx, add -XX:+UseG1GC, or split build into smaller stages.' },
+
+  // TIMEOUT
+  { id: 'timeout', type: 'error', badge: 'fb-error', title: 'Build Timeout',
+    re: /(?:Timeout has been exceeded|Timeout exceeded|FlowInterruptedException)/,
+    body: 'A timeout step or external abort interrupted the pipeline.',
+    fix: 'Increase timeout() duration in Jenkinsfile, or optimize the slow stage.' },
+
+  // EXCEPTIONS
+  { id: 'npe', type: 'error', badge: 'fb-error', title: 'NullPointerException',
+    re: /java\.lang\.NullPointerException/,
+    body: 'Null pointer dereference in build scripts or plugin code. Check the stack trace below this line.',
+    fix: null },
+  { id: 'classnotfound', type: 'error', badge: 'fb-error', title: 'ClassNotFoundException',
+    re: /java\.lang\.ClassNotFoundException/,
+    body: 'A required class was not found on the classpath — usually a missing dependency or plugin.',
+    fix: 'Check that all required Maven/Gradle dependencies are declared and resolvable.' },
+  { id: 'connection-refused', type: 'error', badge: 'fb-error', title: 'Connection Refused',
+    re: /Connection refused|ECONNREFUSED/,
+    body: 'A network connection was refused — external service, artifact repository, or Docker daemon not reachable.',
+    fix: 'Check network connectivity from the Jenkins agent to the target host.' },
+  { id: 'groovy-exception', type: 'error', badge: 'fb-error', title: 'Groovy/Script Exception',
+    re: /groovy\.lang\.|org\.codehaus\.groovy\.|WorkflowScript.*Exception/,
+    body: 'Exception thrown in Groovy pipeline script or shared library code.',
+    fix: 'Check your Jenkinsfile syntax and shared library method signatures.' },
+  { id: 'generic-exception', type: 'error', badge: 'fb-error', title: 'Java Exception',
+    re: /(?:^|\s)(java\.\w+\.\w+Exception|org\.\w+\.\w+Exception):/m,
+    body: 'Java exception detected in build output.',
+    fix: null },
+
+  // EXIT CODES
+  { id: 'exit-nonzero', type: 'error', badge: 'fb-error', title: 'Non-zero exit code',
+    re: /(?:exit code|returned exit code|exited with code)\s+[1-9]\d*/i,
+    body: 'A shell command or script exited with a non-zero status code, indicating failure.',
+    fix: 'Add set -x to your shell script for verbose output, or check the command output above this line.' },
+
+  // STAGE FAILURES
+  { id: 'stage-failed', type: 'error', badge: 'fb-error', title: 'Pipeline Stage Failed',
+    re: /\[Pipeline\].*?(?:FAILED|failed)|Stage.*?(?:FAILED|failed)/i,
+    body: 'A pipeline stage reported failure. Check the stage output above for the specific error.',
+    fix: null },
+
+  // MAVEN ERRORS
+  { id: 'maven-error', type: 'error', badge: 'fb-error', title: 'Maven [ERROR]',
+    re: /^\[ERROR\]/m,
+    body: 'Maven reported an error. Common causes: compilation failures, missing artifacts, plugin configuration errors.',
+    fix: 'Run mvn -X for verbose output to see the full error context.' },
+  { id: 'artifact-missing', type: 'error', badge: 'fb-error', title: 'Artifact not found',
+    re: /Could not resolve|Could not find artifact|Artifact.*not found|Failed to download/i,
+    body: 'Maven/Gradle could not download a dependency. Repository unreachable or version does not exist.',
+    fix: 'Check repository URLs in pom.xml/build.gradle. Verify network access from the Jenkins agent.' },
+
+  // TEST FAILURES
+  { id: 'test-failure', type: 'error', badge: 'fb-error', title: 'Test failures detected',
+    re: /Tests run:.*Failures: [1-9]|Tests run:.*Errors: [1-9]|FAILED.*test|test.*FAILED/i,
+    body: 'Unit or integration test failures detected in build output.',
+    fix: 'Check the test report (target/surefire-reports) for detailed failure messages.' },
+
+  // PLUGIN / CREDENTIALS
+  { id: 'plugin-error', type: 'warning', badge: 'fb-warning', title: 'Plugin error',
+    re: /Plugin.*Error|Error.*Plugin|hudson\.plugins\.\w+Exception/i,
+    body: 'A Jenkins plugin threw an exception or reported an error.',
+    fix: 'Check if the plugin is properly configured and up to date in Jenkins plugin manager.' },
+  { id: 'credentials-missing', type: 'warning', badge: 'fb-warning', title: 'Credentials issue',
+    re: /CredentialsNotFoundException|No credentials found|Invalid credentials/i,
+    body: 'Jenkins could not find or use the specified credentials.',
+    fix: 'Check that credential IDs in your Jenkinsfile match credentials configured in Jenkins > Credentials.' },
+
+  // WARNINGS
+  { id: 'deprecated', type: 'warning', badge: 'fb-warning', title: 'Deprecated API usage',
+    re: /\[DEPRECATION\]|deprecated.*API|API.*deprecated/i,
+    body: 'Deprecated Jenkins or plugin API usage detected. May break in a future Jenkins version.',
+    fix: 'Update your Jenkinsfile or shared libraries to use the current API.' },
+  { id: 'leaked-descriptors', type: 'warning', badge: 'fb-warning', title: 'Leaked file descriptors',
+    re: /Process leaked file descriptors/i,
+    body: 'A subprocess leaked open file descriptors. May cause resource exhaustion on busy agents.',
+    fix: 'Ensure all background processes are terminated in post{} steps.' },
+  { id: 'workspace-locked', type: 'warning', badge: 'fb-warning', title: 'Workspace lock warning',
+    re: /workspace.*locked|locked.*workspace/i,
+    body: 'Workspace was locked — another build may be using the same workspace.',
+    fix: 'Use the lockable-resources plugin or configure unique workspace names per build.' },
+
+  // SUCCESS
+  { id: 'build-success', type: 'success', badge: 'fb-success', title: 'BUILD SUCCESS',
+    re: /BUILD SUCCESS/,
+    body: 'Maven reported a successful build.',
+    fix: null },
+  { id: 'finished-success', type: 'success', badge: 'fb-success', title: 'Build finished: SUCCESS',
+    re: /Finished: SUCCESS/,
+    body: 'Jenkins pipeline completed successfully.',
+    fix: null },
+];
+
+// ─── ANALYZE ───
+function analyzeLog() {
+  const raw = document.getElementById('logInput').value;
+  const resultsArea = document.getElementById('resultsArea');
+
+  if (!raw.trim()) {
+    resultsArea.innerHTML = `<div style="color:var(--text-muted);font-family:var(--mono);font-size:12px;padding:16px 0;">// Paste a Jenkins log first.</div>`;
+    return;
+  }
+
+  // Strip ANSI color codes
+  const clean = raw.replace(/\x1B\[[0-9;]*m/g, '').replace(/\x1B\[[0-9;]*[A-Za-z]/g, '');
+  const lines = clean.split('\n');
+
+  document.getElementById('lineCount').textContent = lines.length + ' lines';
+
+  // Extract summary info
+  const buildTimeMatch = clean.match(/Total time:\s*([\d:\.]+\s*(?:min|s)?)/i);
+  const testMatch = clean.match(/Tests run:\s*(\d+),\s*Failures:\s*(\d+),\s*Errors:\s*(\d+)/i);
+  const stageMatches = [...clean.matchAll(/\[Pipeline\]\s+stage\s*\(([^)]+)\)/gi)];
+
+  // Find findings
+  const findings = [];
+
+  RULES.forEach(rule => {
+    for (let i = 0; i < lines.length; i++) {
+      if (rule.re.test(lines[i])) {
+        const snippet = lines[i].replace(/\x1B\[[0-9;]*m/g, '').trim().substring(0, 120);
+        findings.push({
+          ...rule,
+          lineNum: i + 1,
+          snippet
+        });
+        break; // one finding per rule
+      }
+    }
+  });
+
+  const errors = findings.filter(f => f.type === 'error').length;
+  const warnings = findings.filter(f => f.type === 'warning').length;
+  const successes = findings.filter(f => f.type === 'success').length;
+  const infos = findings.filter(f => f.type === 'info').length;
+
+  document.getElementById('findingCount').textContent = findings.length + ' findings';
+
+  let html = '';
+
+  // Summary
+  let summaryParts = [];
+  summaryParts.push(`<strong>${lines.length}</strong> lines`);
+  if (buildTimeMatch) summaryParts.push(`Build time: <strong>${buildTimeMatch[1]}</strong>`);
+  if (testMatch) summaryParts.push(`Tests: <strong>${testMatch[1]}</strong> run, <strong>${testMatch[2]}</strong> failed, <strong>${testMatch[3]}</strong> errors`);
+  if (stageMatches.length > 0) summaryParts.push(`Stages: <strong>${stageMatches.length}</strong> detected`);
+
+  html += `<div class="log-summary">${summaryParts.join(' · ')}</div>`;
+
+  // Stats
+  html += `<div class="scan-stats">
+    <div class="scan-stat"><span class="snum" style="color:${errors > 0 ? 'var(--red)' : 'var(--text-dim)'}">${errors}</span><span class="slbl">Errors</span></div>
+    <div class="scan-stat"><span class="snum" style="color:${warnings > 0 ? 'var(--orange)' : 'var(--text-dim)'}">${warnings}</span><span class="slbl">Warnings</span></div>
+    <div class="scan-stat"><span class="snum" style="color:${successes > 0 ? 'var(--green)' : 'var(--text-dim)'}">${successes}</span><span class="slbl">Success</span></div>
+    <div class="scan-stat"><span class="snum" style="color:var(--text-dim)">${lines.length}</span><span class="slbl">Lines</span></div>
+  </div>`;
+
+  if (findings.length === 0) {
+    html += `<div class="ok-box">✓ No known error patterns detected.<br><span style="font-size:11px;opacity:0.7;">Log may contain unrecognized build output or an empty/truncated log was pasted.</span></div>`;
+    resultsArea.innerHTML = html;
+    return;
+  }
+
+  // Render findings ordered: errors → warnings → success
+  const ordered = [
+    ...findings.filter(f => f.type === 'error'),
+    ...findings.filter(f => f.type === 'warning'),
+    ...findings.filter(f => f.type === 'success'),
+    ...findings.filter(f => f.type === 'info'),
+  ];
+
+  ordered.forEach(f => {
+    html += `<div class="finding finding-${f.type}">
+      <div class="finding-head">
+        <span class="finding-badge ${f.badge}">${f.type}</span>
+        <span class="finding-title">${esc(f.title)}</span>
+      </div>
+      <div class="finding-body">${esc(f.body)}</div>
+      ${f.snippet ? `<div class="finding-snippet">${esc(f.snippet)}</div>` : ''}
+      ${f.fix ? `<div class="finding-body" style="color:var(--green);margin-top:5px;">→ ${esc(f.fix)}</div>` : ''}
+      <div class="finding-line">Line ${f.lineNum}</div>
+    </div>`;
+  });
+
+  resultsArea.innerHTML = html;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// ─── SAMPLE LOG ───
+const SAMPLE = `Started by user admin
+Running in Durability level: MAX_SURVIVABILITY
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on agent-01 in /var/jenkins/workspace/my-app
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] checkout
+Checking out git https://github.com/company/my-app.git
+ > git fetch --tags
+Commit message: "Fix login issue"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build)
+[Pipeline] sh
++ mvn clean install -DskipTests
+[INFO] Scanning for projects...
+[INFO] Building my-app 2.4.1
+[INFO] --- maven-compiler-plugin:3.8.1:compile ---
+[ERROR] COMPILATION ERROR :
+[ERROR] /src/main/java/com/company/Service.java:[42,15] cannot find symbol
+[ERROR]   symbol:   method getUserById(long)
+[ERROR]   location: class com.company.UserRepository
+[INFO] 2 errors
+[INFO] BUILD FAILURE
+[INFO] Total time: 18.432 s
+[INFO] Finished at: 2026-04-15T10:23:11Z
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Test) (skipped due to earlier failure)
+Tests run: 0
+[Pipeline] }
+Finished: FAILURE`;
+
+function loadSample() {
+  document.getElementById('logInput').value = SAMPLE;
+  document.getElementById('lineCount').textContent = SAMPLE.split('\n').length + ' lines';
+  setTimeout(analyzeLog, 50);
+}
+
+function clearTool() {
+  document.getElementById('logInput').value = '';
+  document.getElementById('lineCount').textContent = '';
+  document.getElementById('findingCount').textContent = '';
+  document.getElementById('resultsArea').innerHTML = `<div class="results-empty"><span class="results-empty-icon">⚙</span><span>Paste a Jenkins log and click<br>Analyze Log</span></div>`;
+}
+
+// live line count
+document.getElementById('logInput').addEventListener('input', function() {
+  const n = this.value ? this.value.split('\n').length : 0;
+  document.getElementById('lineCount').textContent = n > 0 ? n + ' lines' : '';
+});
+
+function toggleFaq(btn) {
+  btn.parentElement.classList.toggle('open');
+}
+</script>
+
+</body>
+</html>
