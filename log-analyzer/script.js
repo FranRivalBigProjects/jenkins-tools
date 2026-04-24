@@ -1,1 +1,0 @@
-const res=document.getElementById('res');function run(){let l=log.value.split('\n').length;res.innerText=`Lines: ${l}`;}
